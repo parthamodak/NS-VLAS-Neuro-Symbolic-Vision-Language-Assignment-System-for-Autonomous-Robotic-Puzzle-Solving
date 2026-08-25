@@ -54,6 +54,10 @@ class MujocoBridge(Node):
         self.cube_body_id = self._require_name(mujoco.mjtObj.mjOBJ_BODY, "cube")
         self.cube_site_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SITE, "cube_target")
         self.joint_ids = [self._require_name(mujoco.mjtObj.mjOBJ_JOINT, name) for name in JOINT_NAMES]
+        grasp_geom_ids = [
+            self._require_name(mujoco.mjtObj.mjOBJ_GEOM, "left_finger_pad"),
+            self._require_name(mujoco.mjtObj.mjOBJ_GEOM, "right_finger_pad"),
+        ]
         arm_ids = named_actuator_ids(self.model, ARM_ACTUATORS)
         self.gripper_ids = named_actuator_ids(self.model, GRIPPER_ACTUATORS)
         set_gripper(self.data, self.gripper_ids, closing=False)
@@ -66,6 +70,7 @@ class MujocoBridge(Node):
             self.cube_site_id,
             arm_ids,
             self.gripper_ids,
+            grasp_geom_ids,
             self._publish_task_state,
         )
         self.last_joint_publish_time = -PUBLISH_PERIOD

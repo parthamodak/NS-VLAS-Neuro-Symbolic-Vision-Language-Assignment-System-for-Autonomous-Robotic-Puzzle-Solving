@@ -29,6 +29,7 @@ class PickTaskController:
         cube_site_id: int,
         arm_ids: list[int],
         gripper_ids: list[int],
+        grasp_geom_ids: list[int],
         on_state_change,
     ) -> None:
         self.model = model
@@ -38,6 +39,7 @@ class PickTaskController:
         self.cube_site_id = cube_site_id
         self.arm_ids = arm_ids
         self.gripper_ids = gripper_ids
+        self.grasp_geom_ids = grasp_geom_ids
         self.on_state_change = on_state_change
         self.state = TaskState.IDLE
         self.phase_start_time = 0.0
@@ -51,6 +53,23 @@ class PickTaskController:
             if self.cube_site_id >= 0
             else self.data.xpos[self.cube_body_id].copy()
         )
+
+    def _grasp_center(self) -> np.ndarray:
+        return np.mean(self.data.geom_xpos[self.grasp_geom_ids], axis=0)
+
+    def _move_grasp_center(self, target_position: np.ndarray) -> float:
+        """Keep attachment_site as the IK site while centring the finger pads."""
+        mujoco.mj_forward(self.model, self.data)
+        attachment_position = self.data.site_xpos[self.attachment_site_id].copy()
+        pad_offset = self._grasp_center() - attachment_position
+        move_end_effector(
+            self.model,
+            self.data,
+            self.attachment_site_id,
+            self.arm_ids,
+            target_position - pad_offset,
+        )
+        return float(np.linalg.norm(target_position - self._grasp_center()))
 
     def _set_state(self, state: TaskState) -> None:
         if self.state != state:
@@ -71,8 +90,8 @@ class PickTaskController:
         cube_position = self._cube_position()
         self.initial_cube_z = float(cube_position[2])
         self.targets = {
-            TaskState.APPROACH: cube_position + np.array([0.0, 0.0, 0.12]),
-            TaskState.DESCEND: cube_position + np.array([0.0, 0.0, 0.015]),
+            TaskState.APPROACH: cube_position + np.array([0.0, 0.0, 0.25]),
+            TaskState.DESCEND: cube_position + np.array([0.0, 0.0, 0.0]),
             TaskState.LIFT: cube_position + np.array([0.0, 0.0, 0.20]),
         }
         self.manual_gripper_closing = False
@@ -100,17 +119,13 @@ class PickTaskController:
 
         if self.state == TaskState.APPROACH:
             set_gripper(self.data, self.gripper_ids, closing=False)
-            if move_end_effector(
-                self.model, self.data, self.attachment_site_id, self.arm_ids, self.targets[TaskState.APPROACH]
-            ) < POSITION_TOLERANCE:
+            if self._move_grasp_center(self.targets[TaskState.APPROACH]) < POSITION_TOLERANCE:
                 self._set_state(TaskState.DESCEND)
             return
 
         if self.state == TaskState.DESCEND:
             set_gripper(self.data, self.gripper_ids, closing=False)
-            if move_end_effector(
-                self.model, self.data, self.attachment_site_id, self.arm_ids, self.targets[TaskState.DESCEND]
-            ) < POSITION_TOLERANCE:
+            if self._move_grasp_center(self.targets[TaskState.DESCEND]) < POSITION_TOLERANCE:
                 self._set_state(TaskState.GRASP)
             return
 
@@ -122,9 +137,7 @@ class PickTaskController:
 
         if self.state == TaskState.LIFT:
             set_gripper(self.data, self.gripper_ids, closing=True)
-            distance = move_end_effector(
-                self.model, self.data, self.attachment_site_id, self.arm_ids, self.targets[TaskState.LIFT]
-            )
+            distance = self._move_grasp_center(self.targets[TaskState.LIFT])
             cube_lifted = self._cube_position()[2] > self.initial_cube_z + 0.08
             if distance < POSITION_TOLERANCE and cube_lifted:
                 self._set_state(TaskState.SUCCESS)
