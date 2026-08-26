@@ -1,0 +1,17 @@
+# ROS 2 generated files
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Backups
+*.bak
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

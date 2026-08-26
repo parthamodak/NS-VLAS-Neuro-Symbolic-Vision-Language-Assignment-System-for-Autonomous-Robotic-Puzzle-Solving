@@ -127,6 +127,26 @@
           rgba="0.25 0.25 0.25 1"/>
 
 
+ <!-- ===================================================== -->
+<!-- SMALL CUBE -->
+<!-- ===================================================== -->
+<body name="cube" pos="0.10 0.25 0.025">
+  <freejoint name="cube_freejoint"/>
+
+  <geom name="cube_geom"
+        type="box"
+        size="0.025 0.025 0.025"
+        rgba="0.1 0.6 0.9 1"
+        mass="0.10"
+        friction="2.0 0.5 0.05"/>
+
+  <site name="cube_target"
+        pos="0 0 0"
+        size="0.008"
+        rgba="1 1 0 1"/>
+</body>
+
+
     <!-- ===================================================== -->
     <!-- TABLE -->
     <!-- ===================================================== -->
@@ -362,12 +382,16 @@
 
                 <geom class="collision"
                       size="0.032 0.05"
-                      pos="0 0 0.035"/>
+                      pos="0 0 0.035"
+                      contype="0"
+                      conaffinity="0"/>
 
                 <geom class="collision"
                       size="0.032 0.027"
                       pos="0 0.01 0.085"
-                      quat="1 1 0 0"/>
+                      quat="1 1 0 0"
+                      contype="0"
+                      conaffinity="0"/>
 
 
                 <!-- Wrist 3 -->
@@ -429,16 +453,16 @@
 
                       <geom name="left_finger"
                             type="box"
-                            size="0.012 0.025 0.06"
-                            pos="0 0 0.06"
+                            size="0.012 0.025 0.040"
+                            pos="0 0 -0.040"
                             rgba="0.2 0.2 0.2 1"
                             friction="1.5 0.5 0.05"
                             mass="0.08"/>
 
                       <geom name="left_finger_pad"
                             type="box"
-                            size="0.006 0.027 0.045"
-                            pos="0.012 0 0.06"
+                            size="0.006 0.027 0.025"
+                            pos="0.012 0 -0.080"
                             rgba="0.35 0.35 0.35 1"
                             friction="2 0.5 0.05"
                             mass="0.03"/>
@@ -458,16 +482,16 @@
 
                       <geom name="right_finger"
                             type="box"
-                            size="0.012 0.025 0.06"
-                            pos="0 0 0.06"
+                            size="0.012 0.025 0.040"
+                            pos="0 0 -0.040"
                             rgba="0.2 0.2 0.2 1"
                             friction="1.5 0.5 0.05"
                             mass="0.08"/>
 
                       <geom name="right_finger_pad"
                             type="box"
-                            size="0.006 0.027 0.045"
-                            pos="-0.012 0 0.06"
+                            size="0.006 0.027 0.025"
+                            pos="-0.012 0 -0.080"
                             rgba="0.35 0.35 0.35 1"
                             friction="2 0.5 0.05"
                             mass="0.03"/>
