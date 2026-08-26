@@ -25,7 +25,6 @@ PHASE_TIMEOUTS = {
 }
 DEBUG_PERIOD = 1.0
 APPROACH_TOLERANCE = 0.015
-PREGRASP_SETTLE_TIME = 1.0
 
 
 class PickTaskController:
@@ -60,7 +59,6 @@ class PickTaskController:
         self.targets: dict[TaskState, np.ndarray] = {}
         self.manual_gripper_closing = False
         self.approach_stage = 0
-        self.pregrasp_settle_start: float | None = None
         self.target_rotation: np.ndarray | None = None
         self.last_debug_time = -DEBUG_PERIOD
 
@@ -91,34 +89,14 @@ class PickTaskController:
         )
         return float(np.linalg.norm(target_position - self._grasp_center()))
 
-    def _orientation_error(self, target_rotation: np.ndarray | None) -> float | None:
-        if target_rotation is None:
-            return None
-        current_quaternion = np.empty(4)
-        target_quaternion = np.empty(4)
-        rotation_error = np.empty(3)
-        mujoco.mju_mat2Quat(current_quaternion, self.data.site_xmat[self.attachment_site_id])
-        mujoco.mju_mat2Quat(target_quaternion, target_rotation)
-        mujoco.mju_subQuat(rotation_error, target_quaternion, current_quaternion)
-        return float(np.linalg.norm(rotation_error))
-
-    def _debug(
-        self,
-        target_position: np.ndarray,
-        error: float,
-        target_rotation: np.ndarray | None = None,
-    ) -> None:
+    def _debug(self, target_position: np.ndarray, error: float) -> None:
         if self.data.time - self.last_debug_time < DEBUG_PERIOD:
             return
         self.last_debug_time = self.data.time
-        orientation_error = self._orientation_error(target_rotation)
-        orientation_text = (
-            "" if orientation_error is None else f" orientation_error={orientation_error:.4f}"
-        )
         self.on_debug(
             f"state={self.state.value} cube={np.round(self._cube_position(), 3)} "
             f"grasp_center={np.round(self._grasp_center(), 3)} "
-            f"target={np.round(target_position, 3)} error={error:.4f}{orientation_text}"
+            f"target={np.round(target_position, 3)} error={error:.4f}"
         )
 
     def _timed_out(self) -> bool:
@@ -137,7 +115,6 @@ class PickTaskController:
         set_gripper(self.data, self.gripper_ids, closing=False)
         self.targets = {}
         self.approach_stage = 0
-        self.pregrasp_settle_start = None
         self.target_rotation = None
         self.last_debug_time = -DEBUG_PERIOD
         self._set_state(TaskState.IDLE)
@@ -149,13 +126,12 @@ class PickTaskController:
         retract_position = self._grasp_center() + np.array([0.0, 0.0, 0.18])
         self.targets = {
             TaskState.APPROACH: retract_position,
-            TaskState.DESCEND: cube_position + np.array([0.0, 0.0, 0.025]),
+            TaskState.DESCEND: cube_position + np.array([0.0, 0.0, 0.015]),
             TaskState.LIFT: cube_position + np.array([0.0, 0.0, 0.20]),
         }
         self.pregrasp_target = cube_position + np.array([0.0, 0.0, 0.25])
         self.manual_gripper_closing = False
         self.approach_stage = 0
-        self.pregrasp_settle_start = None
         self.target_rotation = None
         set_gripper(self.data, self.gripper_ids, closing=False)
         self._set_state(TaskState.APPROACH)
@@ -195,11 +171,7 @@ class PickTaskController:
                     self.approach_stage = 1
                     self.targets[TaskState.APPROACH] = self.pregrasp_target
                     self.on_debug("state=APPROACH reached safe retract; moving to pre-grasp")
-                elif self.approach_stage == 1:
-                    self.approach_stage = 2
-                    self.pregrasp_settle_start = self.data.time
-                    self.on_debug("state=APPROACH reached pre-grasp; settling before descent")
-                elif self.data.time - self.pregrasp_settle_start >= PREGRASP_SETTLE_TIME:
+                else:
                     self.target_rotation = self.data.site_xmat[self.attachment_site_id].copy()
                     self._set_state(TaskState.DESCEND)
             elif self._timed_out():
@@ -211,7 +183,7 @@ class PickTaskController:
             error = self._move_grasp_center(
                 self.targets[TaskState.DESCEND], self.target_rotation
             )
-            self._debug(self.targets[TaskState.DESCEND], error, self.target_rotation)
+            self._debug(self.targets[TaskState.DESCEND], error)
             if error < POSITION_TOLERANCE:
                 self._set_state(TaskState.GRASP)
             elif self._timed_out():
@@ -227,7 +199,7 @@ class PickTaskController:
         if self.state == TaskState.LIFT:
             set_gripper(self.data, self.gripper_ids, closing=True)
             distance = self._move_grasp_center(self.targets[TaskState.LIFT], self.target_rotation)
-            self._debug(self.targets[TaskState.LIFT], distance, self.target_rotation)
+            self._debug(self.targets[TaskState.LIFT], distance)
             cube_lifted = self._cube_position()[2] > self.initial_cube_z + 0.08
             if distance < POSITION_TOLERANCE and cube_lifted:
                 self._set_state(TaskState.SUCCESS)

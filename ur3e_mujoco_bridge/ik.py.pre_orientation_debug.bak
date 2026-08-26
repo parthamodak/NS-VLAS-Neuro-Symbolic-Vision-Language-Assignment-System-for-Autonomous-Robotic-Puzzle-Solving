@@ -16,7 +16,7 @@ GRIPPER_ACTUATORS = ("left_gripper", "right_gripper")
 POSITION_TOLERANCE = 0.008
 MAX_JOINT_STEP = 0.035
 DAMPING = 0.05
-ORIENTATION_WEIGHT = 0.15
+ORIENTATION_WEIGHT = 1.0
 # Verified from the MuJoCo pad positions: 0.0 is open, 0.045 is closed.
 GRIPPER_OPEN = 0.0
 GRIPPER_CLOSED = 0.045
