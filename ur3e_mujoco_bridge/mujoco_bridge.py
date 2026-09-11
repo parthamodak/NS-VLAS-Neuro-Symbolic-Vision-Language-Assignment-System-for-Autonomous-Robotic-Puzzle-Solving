@@ -3,6 +3,7 @@
 from pathlib import Path
 import time
 
+from ament_index_python.packages import get_package_share_directory
 import mujoco
 import mujoco.viewer
 import rclpy
@@ -14,10 +15,16 @@ from .ik import ARM_ACTUATORS, GRIPPER_ACTUATORS, named_actuator_ids, set_grippe
 from .task_controller import PickTaskController
 
 
-DEFAULT_SCENE = (
-    "/mnt/c/Users/mmpar/OneDrive/Desktop/Semister C/"
-    "universal_robots_ur3e-main/universal_robots_ur3e-main/scene.xml"
-)
+
+def _default_scene_path() -> str:
+    """Return the bundled scene from source or the installed package share."""
+    source_scene = Path(__file__).resolve().parents[1] / "simulation" / "scene.xml"
+    if source_scene.is_file():
+        return str(source_scene)
+    return str(Path(get_package_share_directory("ur3e_mujoco_bridge")) / "simulation" / "scene.xml")
+
+
+DEFAULT_SCENE = _default_scene_path()
 JOINT_NAMES = (
     "shoulder_pan_joint",
     "shoulder_lift_joint",
@@ -122,8 +129,10 @@ class MujocoBridge(Node):
         self.joint_state_publisher.publish(message)
 
     def run(self) -> None:
+        """Advance ROS callbacks, task control, and MuJoCo in one simulation loop."""
         with mujoco.viewer.launch_passive(self.model, self.data) as viewer:
             while rclpy.ok() and viewer.is_running():
+                # Process queued ROS commands before applying the next control update.
                 rclpy.spin_once(self, timeout_sec=0.0)
                 self.task.update()
                 mujoco.mj_step(self.model, self.data)

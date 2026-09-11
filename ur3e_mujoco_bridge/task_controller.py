@@ -29,7 +29,7 @@ PREGRASP_SETTLE_TIME = 1.0
 
 
 class PickTaskController:
-    """Runs the existing position-only IK in the original pick-test phases."""
+    """Deterministic physical pick-and-lift state machine using pose-aware IK."""
 
     def __init__(
         self,
@@ -143,6 +143,7 @@ class PickTaskController:
         self._set_state(TaskState.IDLE)
 
     def start_pick_cube(self) -> None:
+        """Create measured approach, grasp-centre, and lift targets for the cube."""
         mujoco.mj_forward(self.model, self.data)
         cube_position = self._cube_position()
         self.initial_cube_z = float(cube_position[2])
@@ -196,6 +197,7 @@ class PickTaskController:
                     self.targets[TaskState.APPROACH] = self.pregrasp_target
                     self.on_debug("state=APPROACH reached safe retract; moving to pre-grasp")
                 elif self.approach_stage == 1:
+                    # Let position actuators settle before freezing the grasp orientation.
                     self.approach_stage = 2
                     self.pregrasp_settle_start = self.data.time
                     self.on_debug("state=APPROACH reached pre-grasp; settling before descent")
@@ -219,6 +221,7 @@ class PickTaskController:
             return
 
         if self.state == TaskState.GRASP:
+            # Hold closure briefly so MuJoCo contact/friction can establish the grasp.
             set_gripper(self.data, self.gripper_ids, closing=True)
             if self.data.time - self.phase_start_time >= 1.0:
                 self._set_state(TaskState.LIFT)

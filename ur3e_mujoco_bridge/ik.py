@@ -1,4 +1,4 @@
-"""Damped least-squares position IK reused from python_main_pick.py."""
+"""Pose-aware weighted damped least-squares IK for the UR3e MuJoCo model."""
 
 import mujoco
 import numpy as np
@@ -16,7 +16,7 @@ GRIPPER_ACTUATORS = ("left_gripper", "right_gripper")
 POSITION_TOLERANCE = 0.008
 MAX_JOINT_STEP = 0.035
 DAMPING = 0.05
-ORIENTATION_WEIGHT = 0.15
+ORIENTATION_WEIGHT = 0.30
 # Verified from the MuJoCo pad positions: 0.0 is open, 0.045 is closed.
 GRIPPER_OPEN = 0.0
 GRIPPER_CLOSED = 0.045
@@ -44,7 +44,12 @@ def move_end_effector(
     target_position: np.ndarray,
     target_rotation: np.ndarray | None = None,
 ) -> float:
-    """Apply one stable DLS Cartesian-position IK update and return distance."""
+    """Map Cartesian position/orientation error to bounded actuator targets.
+
+    The translational and rotational site Jacobians are solved with damping;
+    orientation is optional and weighted to avoid over-constraining the grasp.
+    Resulting joint targets are written to ``data.ctrl``.
+    """
     mujoco.mj_forward(model, data)
     error = target_position - data.site_xpos[attachment_site_id]
     distance = float(np.linalg.norm(error))

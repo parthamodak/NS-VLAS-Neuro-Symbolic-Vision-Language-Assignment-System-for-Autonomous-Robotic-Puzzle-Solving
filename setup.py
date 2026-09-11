@@ -1,3 +1,5 @@
+from glob import glob
+
 from setuptools import find_packages, setup
 
 
@@ -12,6 +14,8 @@ setup(
         (f"share/{package_name}", ["package.xml", "local_setup.dsv"]),
         (f"share/{package_name}/hook", ["hook/ament_prefix_path.dsv"]),
         (f"share/{package_name}/environment", ["environment/ament_prefix_path.dsv"]),
+        (f"share/{package_name}/simulation", ["simulation/scene.xml", "simulation/LICENSE.txt"]),
+        (f"share/{package_name}/simulation/assets", glob("simulation/assets/*.obj")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
