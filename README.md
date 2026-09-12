@@ -1,16 +1,28 @@
-# NS-VLAS: Neuro-Symbolic Vision-Language Assignment System for Autonomous Robotic Puzzle Solving
+# NS-VLAS
+
+## Neuro-Symbolic Vision-Language Assignment System for Autonomous Robotic Puzzle Solving
 
 ## Overview
 
-NS-VLAS is an MSc Artificial Intelligence and Robotics project at the
-University of Hertfordshire. This repository currently provides a ROS 2 and
-MuJoCo UR3e manipulation foundation: a custom Python bridge, deterministic
-task controller, pose-aware damped least-squares (DLS) inverse kinematics, and
-a two-finger gripper that performs a simulated physical cube pick-and-lift.
+NS-VLAS is an MSc Artificial Intelligence and Robotics project at the University
+of Hertfordshire. It demonstrates a simulated UR3e robotic arm using ROS 2
+Jazzy, MuJoCo, and a custom Python ROS 2–MuJoCo bridge. A deterministic task
+controller combines pose-aware damped least-squares inverse kinematics with a
+two-finger gripper to complete a physical simulated cube pick-and-lift.
 
 The wider research direction includes neuro-symbolic vision-language task
 assignment. VLMs, LLMs, VLAs, reinforcement learning, camera perception, and
 real-robot deployment are **not implemented** in this final prototype.
+
+## What this repository demonstrates
+
+- ROS 2 Python node development with `rclpy` publishers and subscribers
+- MuJoCo simulation of UR3e manipulation and a two-finger gripper
+- pose-aware Damped Least-Squares inverse kinematics
+- position and orientation control with bounded actuator commands
+- deterministic state-machine task execution
+- physical contact/friction grasping without an artificial weld
+- debugging of gripper geometry, wrist collision proxies, and grasp timing
 
 ## What is implemented
 
@@ -40,6 +52,8 @@ DLS IK
 MuJoCo actuator commands
         ↓
 UR3e + two-finger gripper
+        ↓
+Cube manipulation
 ```
 
 Command interpretation is predefined keyword matching, not natural-language
@@ -92,7 +106,9 @@ The bundled `simulation/scene.xml` and `simulation/assets/` are installed with
 the package. The default scene is portable; an alternative scene can still be
 provided through the `scene_path` ROS parameter.
 
-## Build
+## Quick Start
+
+Terminal 1 — build and run:
 
 ```bash
 cd ~/ur3e_ws
@@ -101,28 +117,18 @@ export MAKEFLAGS="-j1"
 export CMAKE_BUILD_PARALLEL_LEVEL=1
 colcon build --symlink-install --packages-select ur3e_mujoco_bridge --executor sequential
 source install/setup.bash
-```
-
-The `-j1` and sequential settings are especially useful on low-memory systems.
-
-## Run
-
-Terminal 1:
-
-```bash
-cd ~/ur3e_ws
-source /opt/ros/jazzy/setup.bash
-source install/setup.bash
 ros2 run ur3e_mujoco_bridge mujoco_bridge
 ```
 
-Terminal 2:
+Terminal 2 — send the predefined command:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
 source ~/ur3e_ws/install/setup.bash
 ros2 topic pub --once /robot_command std_msgs/msg/String "{data: 'pick up the cube'}"
 ```
+
+The `-j1` and sequential settings are especially useful on low-memory systems.
 
 To override the packaged scene:
 

@@ -17,3 +17,8 @@ venv/
 
 # Development snapshots; active runtime code has no .bak imports.
 *.bak
+
+# Generated ament package hooks; produced during a colcon build.
+environment/
+hook/
+local_setup.dsv

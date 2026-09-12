@@ -11,9 +11,7 @@ setup(
     packages=find_packages(exclude=["test"]),
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/ur3e_mujoco_bridge"]),
-        (f"share/{package_name}", ["package.xml", "local_setup.dsv"]),
-        (f"share/{package_name}/hook", ["hook/ament_prefix_path.dsv"]),
-        (f"share/{package_name}/environment", ["environment/ament_prefix_path.dsv"]),
+        (f"share/{package_name}", ["package.xml"]),
         (f"share/{package_name}/simulation", ["simulation/scene.xml", "simulation/LICENSE.txt"]),
         (f"share/{package_name}/simulation/assets", glob("simulation/assets/*.obj")),
     ],
