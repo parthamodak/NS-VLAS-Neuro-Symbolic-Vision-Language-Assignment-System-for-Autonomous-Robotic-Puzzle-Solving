@@ -1,0 +1,24 @@
+# Python and ROS 2 generated output
+__pycache__/
+*.py[cod]
+build/
+install/
+log/
+
+# Local environments, secrets, editor state, and temporary files
+.venv/
+venv/
+.env
+*.swp
+.DS_Store
+.vs/
+.vscode/
+.idea/
+
+# Development snapshots; active runtime code has no .bak imports.
+*.bak
+
+# Generated ament package hooks; produced during a colcon build.
+environment/
+hook/
+local_setup.dsv
