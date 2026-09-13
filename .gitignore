@@ -22,3 +22,16 @@ venv/
 environment/
 hook/
 local_setup.dsv
+
+# Generated VLA data and heavyweight ML artefacts.
+artifacts/
+datasets/
+data/
+outputs/
+checkpoints/
+wandb/
+runs/
+huggingface_cache/
+*.pth
+*.pt
+*.safetensors

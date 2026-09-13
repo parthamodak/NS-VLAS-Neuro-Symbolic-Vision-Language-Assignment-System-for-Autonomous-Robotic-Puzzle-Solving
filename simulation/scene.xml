@@ -202,6 +202,13 @@
            target="wrist_3_link"
            pos="0 -1 2"/>
 
+    <!-- Fixed external RGB observation camera for the optional VLA pipeline.
+         It looks diagonally across the table at the robot workspace. -->
+    <camera name="vla_camera"
+            pos="0.75 -0.85 0.65"
+            xyaxes="0.786 0.618 0 -0.296 0.377 0.878"
+            fovy="55"/>
+
 
     <!-- ===================================================== -->
     <!-- UR3e -->

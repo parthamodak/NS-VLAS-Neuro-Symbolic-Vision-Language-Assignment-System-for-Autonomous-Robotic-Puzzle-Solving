@@ -1,6 +1,6 @@
 # Recorded Test Results
 
-## End-to-end pick-and-lift
+## Deterministic baseline: end-to-end pick-and-lift
 
 Command:
 
@@ -45,3 +45,17 @@ The project contains support for and development checks of:
 The standalone `python_main_pick.py` in the original development project was
 used as an earlier direct MuJoCo pick-test reference. The supported public
 runtime is the ROS 2 bridge documented in the main README.
+
+## VLA infrastructure
+
+- Fixed `vla_camera` rendered a real 224×224 `uint8` RGB frame with pixel
+  range 0–255 using MuJoCo `Renderer` under WSL.
+- RGB + complete language instruction + eight-value robot state → mock policy
+  → safety → existing DLS IK integration was tested headlessly.
+- Unit/regression suite: 5 tests passed, including the deterministic physical
+  pick-and-lift regression.
+
+## SmolVLA inference and autonomous evaluation
+
+Not yet tested. No LeRobot/SmolVLA dependency, checkpoint, model training, or
+real neural inference was installed or run on the development machine.

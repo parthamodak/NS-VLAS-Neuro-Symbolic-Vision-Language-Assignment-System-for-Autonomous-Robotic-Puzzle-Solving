@@ -1,0 +1,3 @@
+# Install this only in a separate Python 3.12 ML environment, never in ROS Jazzy.
+# Current official LeRobot main is 0.6.1 and requires Python >=3.12.
+lerobot[smolvla]==0.6.1

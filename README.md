@@ -24,6 +24,21 @@ real-robot deployment are **not implemented** in this final prototype.
 - physical contact/friction grasping without an artificial weld
 - debugging of gripper geometry, wrist collision proxies, and grasp timing
 
+## Implementation status
+
+| Component | Status |
+| --- | --- |
+| ROS 2–MuJoCo bridge | Working |
+| Deterministic physical pick-and-lift | Working baseline |
+| Pose-aware DLS IK | Working |
+| RGB MuJoCo `vla_camera` | Render-tested (224×224 RGB) |
+| VLA observation pipeline | Implemented; mock-tested |
+| Native dataset recorder/validator | Implemented; episode recording not yet run |
+| SmolVLA adapter | Implemented, dependency/checkpoint untested |
+| SmolVLA dependencies/fine-tuning/inference | Not installed or attempted |
+| Autonomous VLA cube pick | Not implemented/tested |
+| Physical UR3e deployment | Not implemented |
+
 ## What is implemented
 
 - ROS 2 Jazzy Python package (`ur3e_mujoco_bridge`)
@@ -129,6 +144,42 @@ ros2 topic pub --once /robot_command std_msgs/msg/String "{data: 'pick up the cu
 ```
 
 The `-j1` and sequential settings are especially useful on low-memory systems.
+
+## Optional VLA infrastructure
+
+The deterministic controller remains the default. It does not import, download,
+or require ML dependencies.
+
+```bash
+# Camera smoke test (writes an ignored frame under artifacts/)
+python3 scripts/test_vla_camera.py
+
+# Test-only mock path: image + full instruction + robot state → safety → DLS IK
+ros2 run ur3e_mujoco_bridge mujoco_bridge --ros-args -p policy_mode:=vla -p vla_backend:=mock
+
+# Separate Python 3.12 ML environment only; do not install into ROS Jazzy.
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-vla.txt
+```
+
+`policy_mode:=vla` accepts the complete `/robot_command` string without
+deterministic keyword matching. A failed renderer, missing dependency, absent
+checkpoint, or unsafe action reports `/vla/status` `ERROR` and applies no
+neural action. `vla_frequency_hz` defaults to 5 Hz, while MuJoCo remains at
+500 Hz; policy action chunks are queued and consumed at the policy frequency.
+
+Record one deterministic teacher episode explicitly (not automatically):
+
+```bash
+ros2 run ur3e_mujoco_bridge mujoco_bridge --ros-args \
+  -p record_dataset:=true -p episode_id:=001
+# In another terminal publish: pick up the cube
+python3 scripts/validate_dataset.py artifacts/datasets
+```
+
+See [docs/VLA_ARCHITECTURE.md](docs/VLA_ARCHITECTURE.md),
+[docs/VLA_DATASET.md](docs/VLA_DATASET.md), and
+[training/README.md](training/README.md) for constraints and next steps.
 
 To override the packaged scene:
 
